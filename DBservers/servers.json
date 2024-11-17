@@ -1,0 +1,22 @@
+{
+    "servers": [
+        {
+            "server_name": "Server1",
+            "server_id": "12345",
+            "server_password": "password123",
+            "server_status": true
+        },
+        {
+            "server_name": "Server2",
+            "server_id": "123456",
+            "server_password": "password1234",
+            "server_status": false
+        },
+        {
+            "server_name": "Server3выаы",
+            "server_id": "123456ываы",
+            "server_password": "password1234выаыа",
+            "server_status": false
+        }
+    ]
+}
