@@ -61,6 +61,34 @@ def display_servers(filename="ServersDataBase.json"):
             print("-" * 20)
 
 
+def delete_server(server_name, filename="ServersDataBase.json"):
+    with open(filename, "r", encoding="utf-8") as file:
+        content = file.read().strip()
+        if not content:
+            print("Файл пуст.")
+            return
+        data = json.loads(content)
+        if "servers" not in data or not data["servers"]:
+            print("Нет данных о серверах.")
+            return
+
+        server_found = False
+        for server in data["servers"]:
+            if server["server_name"] == server_name:
+                data["servers"].remove(server)
+                server_found = True
+                print(f"Сервер с именем {server_name} удален.")
+                break
+
+        if not server_found:
+            print(f"Сервер с именем {server_name} не найден.")
+            return
+
+        # Сохраняем обновленные данные в JSON файл
+    with open(filename, "w", encoding="utf-8") as file:
+        json.dump(data, file, indent=4, ensure_ascii=False)
+
+
 print('\n' * 2)
 #   Передаём в бд сервер из тг
 new_server = ServerInfo(
@@ -99,3 +127,6 @@ print('Пробуем добавить Server3')
 add_server(new_server)
 #   Покажи данные внутри .json
 display_servers()
+
+
+delete_server('Server3')

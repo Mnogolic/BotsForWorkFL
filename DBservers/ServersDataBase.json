@@ -11,12 +11,6 @@
             "server_ip": "12345",
             "server_password": "password123",
             "server_status": true
-        },
-        {
-            "server_name": "Server3",
-            "server_ip": "123455",
-            "server_password": "password123",
-            "server_status": true
         }
     ]
 }
