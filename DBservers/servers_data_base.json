@@ -1,0 +1,16 @@
+{
+    "servers": [
+        {
+            "name": "Server1",
+            "ip": "12345675765",
+            "password": "password123",
+            "status": true
+        },
+        {
+            "name": "Server2",
+            "ip": "12345",
+            "password": "password123",
+            "status": true
+        }
+    ]
+}
