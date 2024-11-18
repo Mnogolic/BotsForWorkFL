@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 import json
-from typing import List
 
 
 #   Класс из которого мы будем собирать базу данных в .json, основан на User из user.py
@@ -77,7 +76,7 @@ def delete_server(server_name, filename="ServersDataBase.json"):
             if server["server_name"] == server_name:
                 data["servers"].remove(server)
                 server_found = True
-                print(f"Сервер с именем {server_name} удален.")
+                print(f"\nСервер с именем {server_name} удален.\n")
                 break
 
         if not server_found:
@@ -130,3 +129,4 @@ display_servers()
 
 
 delete_server('Server3')
+display_servers()
