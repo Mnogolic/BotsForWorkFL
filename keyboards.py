@@ -4,7 +4,8 @@ from aiogram.types.inline_keyboard import InlineKeyboardButton, InlineKeyboardMa
 
 buttons = [
     [KeyboardButton('Добавить сервер')],
-    [KeyboardButton('Добавить/Удалить администратора', request_user=KeyboardButtonRequestUser(0))]
+    [KeyboardButton('Удалить сервер')],
+    [KeyboardButton('Вывести все сервера')]
 ]
 main = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
 

@@ -1,12 +1,12 @@
 import keyboards
 import texts
-from pydantic import BaseModel
+from DBservers.server_scheme import ServersManager, ServerInfo
 
 #   Навигация статусов
 order_states = (
     'main',
     'input_server_name',
-    'input_server_id',
+    'input_server_ip',
     'input_server_password',
     'input_server_status',
     'confirm_server',
@@ -15,7 +15,7 @@ order_states = (
 state_answers = {
     'main': {'text': 'Главное меню', 'reply_markup': keyboards.main},
     'input_server_name': {'text': 'Введите имя сервера:', 'reply_markup': keyboards.back},
-    'input_server_id': {'text': 'Введите его ip:', 'reply_markup': keyboards.back},
+    'input_server_ip': {'text': 'Введите его ip:', 'reply_markup': keyboards.back},
     'input_server_password': {'text': 'Введите пароль:', 'reply_markup': keyboards.back},
     'input_server_status': {'text': 'Выберите состояние сервера: ', 'reply_markup': keyboards.yes_or_no},
 }
@@ -24,16 +24,22 @@ state_answers = {
 class User:
     #   новая переменная, которая будет хранить имя сервера
     server_name = None
-    server_id = None
+    server_ip = None
     server_password = None
+    server_status = None
+
     amount = 0
     #   boolean переменная пусть будет по стандарту True
-    server_status = None
+
     has_payed = True
 
     order_state_index = 0
     server_info = None
     tex2 = None
+
+    #   обращение к калссу с функцциями в базе данных
+    db = ServersManager()
+    server_manager = ServersManager()
 
     #   ты что-то рассказывал про возникновение ошибок
     state_answers = state_answers
@@ -82,6 +88,24 @@ class User:
         if data == 'Назад' and state != 'main':
             self.order_state_index -= 1
             return await self.state_prompt()
+
+        #   Выписать данные серваков из servers_data_base.json когда пользователь нажал кнопку 'Вывести все сервера':
+        elif data == 'Вывести все сервера':
+            server_list = self.db.get_from_bd()
+            text2 = 'Сервера:\n\n'
+
+            for server in server_list.servers:
+                text2 += texts.server_info.format(
+                    server.name,
+                    server.ip,
+                    server.password,
+                    'включен' if server.status else 'выключен'
+                )
+                text2 += '\n'
+
+            self.order_state_index -= 1
+            return await self.next_order_state(text=text2, keyboard=keyboards.main)
+
         elif data == 'Добавить сервер':
             return await self.next_order_state()
         else:
@@ -96,8 +120,8 @@ class User:
         return await self.next_order_state()
 
     #   Функция ставит id серверу
-    async def set_server_id(self, server_id):
-        self.server_id = server_id
+    async def set_server_ip(self, server_ip):
+        self.server_ip = server_ip
         return await self.next_order_state()
 
     #   Фунция передающая пароль сервера
@@ -115,87 +139,52 @@ class User:
 
             text2 = texts.server_info.format(
                 self.server_name,
-                self.server_id,
+                self.server_ip,
                 self.server_password,
                 server_status
             )
 
-            """
-            splited_server_status = server_status.split()[0]
-            text = (f'Проверьте данные сервера',
-                    f'Заказ добавлен.',
-                    f'\nИмя сервера:       {self.server_name}',
-                    f'\nid сервера:           {self.server_id}',
-                    f'\nПароль сеовера:  {self.server_password}',
-                    f'\nСтатус сервера:    {splited_server_status}'
-                    )
-            text2 = ''.join(text)
-            """
         #   Если пользователь выбрал кнопку 'выключен', записываем server_status = False
         elif server_status == 'выключен':
             self.server_status = False
-            text2 = 'Проверьте введённые данные'
-            """ 
-            splited_server_status = server_status.split()[0]
-            text = (f'Проверьте данные сервера',
-                    f'Заказ добавлен.',
-                    f'\nИмя сервера:       {self.server_name}',
-                    f'\nid сервера:           {self.server_id}',
-                    f'\nПароль сеовера:  {self.server_password}',
-                    f'\nСтатус сервера:    {splited_server_status}'
-                    )
-            text2 = ''.join(text)
-            """
             text2 = texts.server_info.format(
                 self.server_name,
-                self.server_id,
+                self.server_ip,
                 self.server_password,
                 server_status
             )
         else:
             text2 = 'Ошибка в выборе статуса'
-        """
-        await self.set_order_state('main')
-        return {'text': text, 'reply_markup': keyboards.main}
-        """
+
         return await self.next_order_state(text=text2, keyboard=keyboards.confirm_server)
 
     async def confirm_server(self, data):
-        """
-        if self.server_status:
-            output_server_name = 'Включен'
-        else:
-            output_server_name = 'Выключен'
-        """
+
         if data == 'send':
-            text2 = 'Сервер добавлен.'
+            new_server = ServerInfo(
+                name=self.server_name,
+                ip=self.server_ip,
+                password=self.server_password,
+                status=self.server_status
+            )
+            self.server_manager.add_server(new_server)
+
+            text2 = texts.server_info.format(
+                self.server_name,
+                self.server_ip,
+                self.server_password,
+                self.server_status
+            )
+
         else:
             text2 = 'Сервер не был добавлен.'
         await self.set_order_state('main')
         return {'text': text2, 'reply_markup': keyboards.main}
 
 
-""" 
-    async def confirm_server(self, data):
-        if data == 'send':
-            server_info = ServerInfo(
-                server_name=self.server_name,
-                server_id=self.server_id,
-                server_password=self.server_password,
-                server_status=self.server_status,
-                has_payed=True
-            )
-            text = 'Сервер добавлен.'
-        else:
-            text = 'Сервер не был добавлен.'
-
-        await self.set_order_state('main')
-        return {'text': text, 'reply_markup': keyboards.main}
-"""
-
 state_funcs = {
     'input_server_name': User.set_server_name,
-    'input_server_id': User.set_server_id,
+    'input_server_ip': User.set_server_ip,
     'input_server_password': User.set_server_password,
     'input_server_status': User.set_server_status,
     'confirm_server': User.confirm_server,
