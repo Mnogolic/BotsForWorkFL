@@ -8,7 +8,7 @@ buttons = [
     [KeyboardButton('Удалить сервер')],
     [KeyboardButton('Выключить сервер')],
     [KeyboardButton('Включить сервер')],
-    [KeyboardButton('Вывести все сервера')],
+    [KeyboardButton('Вывести все сервера')]
 ]
 main = ReplyKeyboardMarkup(buttons, resize_keyboard=True)
 
@@ -30,8 +30,8 @@ confirm_server = InlineKeyboardMarkup(inline_keyboard=buttons)
 
 #   Генерация кнопок для удаления
 def buttons_generator():
-    buttons_from_json = ButtonsGenerator()
-    list_of_buttons = buttons_from_json.generate_buttons()
+    server_list_keyboard_class = ButtonsGenerator()
+    list_of_buttons = server_list_keyboard_class.generate_buttons()
     buttons = InlineKeyboardMarkup(inline_keyboard=list_of_buttons)
     return buttons
 

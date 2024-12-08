@@ -17,7 +17,6 @@ order_states = (
     'off_this_one',
     'choose_server_to_on',
     'on_this_one',
-
 )
 #   Перенаправление ответа 1
 state_answers = {
@@ -36,6 +35,11 @@ state_answers = {
 
 
 class User:
+    #   функционал перемещения по state`ам
+    order_state_index = 0
+    state_answers = state_answers
+    order_states = order_states
+
     #   новая переменная, которая будет хранить имя сервера
     server_name = None
     server_ip = None
@@ -50,11 +54,6 @@ class User:
 
     #   обращение к калссу с функцциями в базе данных
     server_manager = ServersManager()
-
-    #   функционал перемещения по state`ам
-    order_state_index = 0
-    state_answers = state_answers
-    order_states = order_states
 
     def __init__(self, id) -> None:
         self.id = id
@@ -77,7 +76,7 @@ class User:
 
     async def state_prompt(self, text=None, keyboard=None, photo=None, photos=None, additional_data=None):
         state = await self.get_order_state()
-
+        print('Что в state -', state)
         if text or keyboard or photo or photos:
             answer = {}
             if text:
@@ -90,6 +89,7 @@ class User:
                 answer['photos'] = photos
             if additional_data:
                 answer['additional_data'] = additional_data
+            print('Что в answer -', answer, '\n\n')
             return answer
 
         return self.state_answers[state]
@@ -123,11 +123,19 @@ class User:
             await self.set_order_state('choose_server_to_on')
             return await self.state_prompt(text=data, keyboard=keyboards.buttons_false_generator())
 
+
         else:
-            return {'text': 'Некорректная команда №1. Если возникли проблемы - свяжитесь с @Zeportus'}
+            return await self.state_funcs[state](self, data)
+
+        # else:
+        # try:
+        #    return await self.state_funcs[state](self, data)
+        #except:
+        #    return {'text': 'Некорректная команда №1. Если возникли проблемы - свяжитесь с @Zeportus'}
 
     #   Функция ставит имя серверу
     async def set_server_name(self, server_name):
+        print(self.order_state_index)
         self.server_name = server_name
         return await self.next_order_state()
 
@@ -295,10 +303,13 @@ state_funcs = {
     'input_server_password': User.set_server_password,  # линия 1
     'input_server_status': User.set_server_status,  # линия 1
     'confirm_server': User.confirm_server,  # линия 1
+
     'choose_server_to_delete': User.choose_server_to_delete,  # линия 2
     'delete_this_one': User.delete_this_one,  # линия 2
+
     'choose_server_to_off': User.choose_server_to_off,  # линия 3
     'off_this_one': User.off_this_one,  # линия 3
+
     'choose_server_to_on': User.choose_server_to_on,  # линия 4
     'on_this_one': User.on_this_one,  # линия 4
 }

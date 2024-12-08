@@ -7,21 +7,15 @@
             "status": true
         },
         {
-            "name": "bvcbcvbvc",
-            "ip": "bcbvcb",
-            "password": "bcbvcbvc",
-            "status": true
+            "name": "fdsfdsfds",
+            "ip": "fsdfds",
+            "password": "sfdsfds",
+            "status": false
         },
         {
-            "name": "омроиорилор",
-            "ip": "орилрилор",
-            "password": "лоилдилиол",
-            "status": true
-        },
-        {
-            "name": "1",
-            "ip": "1",
-            "password": "1",
+            "name": "asdadsa",
+            "ip": "dsadsad",
+            "password": "dsadsada",
             "status": false
         }
     ]

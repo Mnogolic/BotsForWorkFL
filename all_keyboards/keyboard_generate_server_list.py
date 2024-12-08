@@ -37,6 +37,7 @@ class ButtonsGenerator:
 
     def generate_buttons(self, *args):
 
+        servers_names = self._give_me_server_list()
         if not args:  # Если *args пустое
             servers_names = self._give_me_server_list()
         elif args[0] is True:  # Если передан True
@@ -54,7 +55,7 @@ class ButtonsGenerator:
 
         return buttons
 
-""" """
+""" 
 buttons = ButtonsGenerator()
 buttons0 = buttons.generate_buttons()
 buttons_true = buttons.generate_buttons(False)
@@ -62,3 +63,4 @@ buttons_false = buttons.generate_buttons(True)
 print("generate_buttons -", buttons0)
 print("generate_buttons(False) -", buttons_true)
 print("generate_buttons(True) -", buttons_false)
+"""
