@@ -2,7 +2,8 @@ import json
 
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
-import keyboards
+
+from all_keyboards import keyboards
 from user import User
 
 bot = Bot('7950408641:AAGSSORuNeTQDF5-YsJDrHztcPiqV-Cqlaw')

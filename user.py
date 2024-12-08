@@ -1,6 +1,7 @@
-import keyboards
+from all_keyboards import keyboards
 import texts
-from DBservers.server_scheme import ServersManager, ServerInfo
+from DBservers.servers_functions import ServersManager
+from DBservers.server_scheme import ServerInfo
 
 #   Навигация статусов
 order_states = (
@@ -35,7 +36,6 @@ class User:
 
     order_state_index = 0
     server_info = None
-    tex2 = None
 
     #   обращение к калссу с функцциями в базе данных
     db = ServersManager()
@@ -45,6 +45,7 @@ class User:
     state_answers = state_answers
     order_states = order_states
 
+    #   А захуй тут id?
     def __init__(self, id) -> None:
         self.id = id
         self.state_funcs = state_funcs
@@ -103,11 +104,17 @@ class User:
                 )
                 text2 += '\n'
 
-            self.order_state_index -= 1
-            return await self.next_order_state(text=text2, keyboard=keyboards.main)
+            #   self.order_state_index -= 1
+            #   было рарньше next_order_state
+            return await self.state_prompt(text=text2, keyboard=keyboards.main)
 
         elif data == 'Добавить сервер':
             return await self.next_order_state()
+
+        elif data == 'Удалить сервер':
+            text = 'Какой сервер хотите удалить?'
+            return await self.state_prompt(text=text, keyboard=keyboards.server_list_keyboard)
+
         else:
             try:
                 return await self.state_funcs[state](self, data)
@@ -169,12 +176,15 @@ class User:
             )
             self.server_manager.add_server(new_server)
 
+            """
             text2 = texts.server_info.format(
                 self.server_name,
                 self.server_ip,
                 self.server_password,
                 self.server_status
             )
+            """
+            text2 = 'Сервер был у спешно добавлен'
 
         else:
             text2 = 'Сервер не был добавлен.'
