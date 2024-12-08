@@ -7,6 +7,8 @@ class ServersManager:
     def __init__(self, path='servers_data_base.json'):
         self.path = Path(__file__).parent / path
 
+    # Нужен для проверки, и вывода через user, если сервер с таким ip уже существует
+
     def _get_servers_list(self):
         try:
             with open(self.path, "r", encoding="utf-8") as f:
@@ -32,14 +34,14 @@ class ServersManager:
 
         for server_info in server_list.servers:
             if server_info.ip == adding_server_info.ip:
-                print("Сервер с такими данными уже существует.\n")
-                return
+                return "Сервер с таким ip уже существует, возвращаем вас в главное меню"
 
         server_list.servers.append(adding_server_info)
 
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(server_list.dict(), f, indent=4, ensure_ascii=False)
-        print("Сервер успешно добавлен.\n")
+        print("Index: None, Сервер успешно добавлен.\n")
+        return "Сервер успешно добавлен"
 
     def delete_server(self, server_name):
         server_list = self._get_servers_list()
@@ -55,6 +57,6 @@ class ServersManager:
             return
 
         server_list.servers.remove(server_info_to_delete)
-
+        print("Index: None, Сервер успешно удалён.\n")
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(server_list.dict(), f, indent=4, ensure_ascii=False)

@@ -1,24 +1,34 @@
 from all_keyboards import keyboards
 import texts
-from DBservers.servers_functions import ServersManager
+from DBservers.servers_manager import ServersManager
 from DBservers.server_scheme import ServerInfo
 
 #   Навигация статусов
 order_states = (
-    'main',
-    'input_server_name',
+    'main',  # начало линий
+    #   _____________________________________________
+    'input_server_name',  # начало линия 1
     'input_server_ip',
     'input_server_password',
     'input_server_status',
     'confirm_server',
+    #   _____________________________________________
+    'choose_server',  # начало линия 2
+    'delete_this_one',
+
 )
-#   Перенаправление ответа
+#   Перенаправление ответа 1
 state_answers = {
-    'main': {'text': 'Главное меню', 'reply_markup': keyboards.main},
+    'main': {'text': 'Главное меню', 'reply_markup': keyboards.main},  # начало линий
+    #   _____________________________________________   линия 1
     'input_server_name': {'text': 'Введите имя сервера:', 'reply_markup': keyboards.back},
     'input_server_ip': {'text': 'Введите его ip:', 'reply_markup': keyboards.back},
     'input_server_password': {'text': 'Введите пароль:', 'reply_markup': keyboards.back},
     'input_server_status': {'text': 'Выберите состояние сервера: ', 'reply_markup': keyboards.yes_or_no},
+    #   _____________________________________________   линия 2
+    'choose_server': {'text': 'Выберите сервер для удаления', 'reply_markup': None},
+    'delete_this_one': {'text': 'Вы уверены, что хотите удалить сервер?', 'reply_markup': keyboards.delete_this_server},
+
 }
 
 
@@ -29,23 +39,20 @@ class User:
     server_password = None
     server_status = None
 
-    amount = 0
     #   boolean переменная пусть будет по стандарту True
+    #   amount = 0
+    #   has_payed = True
 
-    has_payed = True
-
-    order_state_index = 0
     server_info = None
 
     #   обращение к калссу с функцциями в базе данных
-    db = ServersManager()
     server_manager = ServersManager()
 
-    #   ты что-то рассказывал про возникновение ошибок
+    #   функционал перемещения по state`ам
+    order_state_index = 0
     state_answers = state_answers
     order_states = order_states
 
-    #   А захуй тут id?
     def __init__(self, id) -> None:
         self.id = id
         self.state_funcs = state_funcs
@@ -55,6 +62,7 @@ class User:
 
     #   Переходм на следующую ступень state
     async def next_order_state(self, text=None, keyboard=None, photo=None, photos=None):
+        print('Index:', self.order_state_index)
         self.order_state_index += 1
         return await self.state_prompt(text, keyboard, photo, photos)
 
@@ -90,30 +98,16 @@ class User:
             self.order_state_index -= 1
             return await self.state_prompt()
 
-        #   Выписать данные серваков из servers_data_base.json когда пользователь нажал кнопку 'Вывести все сервера':
-        elif data == 'Вывести все сервера':
-            server_list = self.db.get_from_bd()
-            text2 = 'Сервера:\n\n'
+        elif data == 'Добавить сервер':  # Начало линия 1
+            await self.set_order_state('input_server_name')
+            return await self.state_prompt()
 
-            for server in server_list.servers:
-                text2 += texts.server_info.format(
-                    server.name,
-                    server.ip,
-                    server.password,
-                    'включен' if server.status else 'выключен'
-                )
-                text2 += '\n'
-
-            #   self.order_state_index -= 1
-            #   было рарньше next_order_state
-            return await self.state_prompt(text=text2, keyboard=keyboards.main)
-
-        elif data == 'Добавить сервер':
-            return await self.next_order_state()
+        elif data == 'Вывести все сервера':  # Вывод серверов можно сказать линия 2
+            return await self.show_all_servers()
 
         elif data == 'Удалить сервер':
-            text = 'Какой сервер хотите удалить?'
-            return await self.state_prompt(text=text, keyboard=keyboards.server_list_keyboard)
+            await self.set_order_state('choose_server')
+            return await self.state_prompt(text=data, keyboard=keyboards.buttons_generator())
 
         else:
             try:
@@ -142,7 +136,6 @@ class User:
         #   Если пользователь выбрал кнопку 'включён', записываем server_status = True
         if server_status == 'включён' or server_status == 'включен':
             self.server_status = True
-            text2 = 'Проверьте введённые данные'
 
             text2 = texts.server_info.format(
                 self.server_name,
@@ -166,7 +159,6 @@ class User:
         return await self.next_order_state(text=text2, keyboard=keyboards.confirm_server)
 
     async def confirm_server(self, data):
-
         if data == 'send':
             new_server = ServerInfo(
                 name=self.server_name,
@@ -174,28 +166,69 @@ class User:
                 password=self.server_password,
                 status=self.server_status
             )
-            self.server_manager.add_server(new_server)
-
-            """
-            text2 = texts.server_info.format(
-                self.server_name,
-                self.server_ip,
-                self.server_password,
-                self.server_status
-            )
-            """
-            text2 = 'Сервер был у спешно добавлен'
-
+            result = self.server_manager.add_server(new_server)  # Получаем результат добавления
+            text2 = result  # Выводим результат ("Сервер с таким ip уже существует" или "Сервер успешно добавлен")
         else:
             text2 = 'Сервер не был добавлен.'
+
+        # Возврат в главное меню
         await self.set_order_state('main')
         return {'text': text2, 'reply_markup': keyboards.main}
 
+    #   Втоаря линия, удалние, если надо
+    async def show_all_servers(self):
+        # Получаем список серверов
+        server_list = self.server_manager.get_from_bd()
+        text2 = 'Сервера:\n\n'
+
+        # Формируем текст для отображения серверов
+        for server in server_list.servers:
+            text2 += texts.server_info.format(
+                server.name,
+                server.ip,
+                server.password,
+                'включен' if server.status else 'выключен'
+            )
+            text2 += '\n'
+
+        # Возвращаем сгенерированный текст
+        return await self.state_prompt(text=text2, keyboard=keyboards.main)
+
+    async def choose_server(self, data):
+        if data.lower() == 'decline':
+            text2 = 'Главное меню'
+            return await self.state_prompt(text=text2, keyboard=keyboards.main)
+        else:
+            self.server_name = data  # Сохраняем имя сервера
+            text2 = f"Вы выбрали сервер '{self.server_name}' для удаления."
+            return await self.next_order_state(text=text2, keyboard=keyboards.delete_this_server)
+
+    async def delete_this_one(self, data):
+        if data.lower() == 'удалить':
+            if self.server_name:  # Проверка, что имя сервера установлено
+                # Удаление сервера из базы
+                self.server_manager.delete_server(self.server_name)
+                text2 = f"Сервер '{self.server_name}' удалён."
+            else:
+                text2 = "Ошибка: Не выбран сервер для удаления."
+        else:
+            text2 = "Удаление отменено."
+
+        # Возврат в главное меню
+        await self.set_order_state('main')
+        return {'text': text2, 'reply_markup': keyboards.main}
+
+    # Добавить в state_funcs
+
 
 state_funcs = {
-    'input_server_name': User.set_server_name,
-    'input_server_ip': User.set_server_ip,
-    'input_server_password': User.set_server_password,
-    'input_server_status': User.set_server_status,
-    'confirm_server': User.confirm_server,
+    'input_server_name': User.set_server_name,  # линия 1
+    'input_server_ip': User.set_server_ip,  # линия 1
+    'input_server_password': User.set_server_password,  # линия 1
+    'input_server_status': User.set_server_status,  # линия 1
+    'confirm_server': User.confirm_server,  # линия 1
+    #   _____________________________________________
+    'choose_server': User.choose_server,    # линия 2
+    'delete_this_one': User.delete_this_one,  # линия 2
+
 }

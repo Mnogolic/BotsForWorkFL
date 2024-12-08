@@ -1,9 +1,6 @@
 from aiogram.types.reply_keyboard import ReplyKeyboardMarkup, KeyboardButton, KeyboardButtonRequestUser
 from aiogram.types.inline_keyboard import InlineKeyboardButton, InlineKeyboardMarkup
-from all_keyboards.keyboard_generate_server_list import GenerateServersList
-
-#   для генерации клавы
-server_list_keyboard = GenerateServersList()
+from all_keyboards.keyboard_generate_server_list import ButtonsGenerator
 
 #   Кнопки main
 buttons = [
@@ -27,12 +24,22 @@ buttons = [
     [InlineKeyboardButton('Отменить', callback_data='decline')]
 ]
 confirm_server = InlineKeyboardMarkup(inline_keyboard=buttons)
-print('confirm_server', confirm_server)
+
 
 #   Inline кнопка вывода серверов
-buttons = server_list_keyboard.generate_buttons()
-server_list = InlineKeyboardMarkup(inline_keyboard=buttons)
-print('server_list', server_list)
+def buttons_generator():
+    server_list_keyboard_class = ButtonsGenerator()
+    list_of_buttons = server_list_keyboard_class.generate_buttons()
+    buttons = InlineKeyboardMarkup(inline_keyboard=list_of_buttons)
+    return buttons
+
+
+#   Кнопка, добавить ли сервер, данные которого ввёл пользователь
+buttons = [
+    [InlineKeyboardButton('Удалить', callback_data='удалить')],
+    [InlineKeyboardButton('Отменить', callback_data='decline')]
+]
+delete_this_server = InlineKeyboardMarkup(inline_keyboard=buttons)
 
 buttons = [
     [KeyboardButton('Назад')]

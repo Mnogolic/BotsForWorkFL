@@ -1,8 +1,8 @@
-from DBservers.servers_functions import ServersManager
+from DBservers.servers_manager import ServersManager
 from aiogram.types.inline_keyboard import InlineKeyboardButton, InlineKeyboardMarkup
 
 
-class GenerateServersList:
+class ButtonsGenerator:
     #   обращение к калссу с функцциями в базе данных
     db = ServersManager()
     server_manager = ServersManager()
