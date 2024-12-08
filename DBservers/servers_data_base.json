@@ -11,6 +11,18 @@
             "ip": "bcbvcb",
             "password": "bcbvcbvc",
             "status": true
+        },
+        {
+            "name": "омроиорилор",
+            "ip": "орилрилор",
+            "password": "лоилдилиол",
+            "status": true
+        },
+        {
+            "name": "1",
+            "ip": "1",
+            "password": "1",
+            "status": false
         }
     ]
 }

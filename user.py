@@ -5,30 +5,33 @@ from DBservers.server_scheme import ServerInfo
 
 #   Навигация статусов
 order_states = (
-    'main',  # начало линий
-    #   _____________________________________________
-    'input_server_name',  # начало линия 1
+    'main',
+    'input_server_name',
     'input_server_ip',
     'input_server_password',
     'input_server_status',
     'confirm_server',
-    #   _____________________________________________
-    'choose_server',  # начало линия 2
+    'choose_server_to_delete',
     'delete_this_one',
+    'choose_server_to_off',
+    'off_this_one',
+    'choose_server_to_on',
+    'on_this_one',
 
 )
 #   Перенаправление ответа 1
 state_answers = {
     'main': {'text': 'Главное меню', 'reply_markup': keyboards.main},  # начало линий
-    #   _____________________________________________   линия 1
     'input_server_name': {'text': 'Введите имя сервера:', 'reply_markup': keyboards.back},
     'input_server_ip': {'text': 'Введите его ip:', 'reply_markup': keyboards.back},
     'input_server_password': {'text': 'Введите пароль:', 'reply_markup': keyboards.back},
     'input_server_status': {'text': 'Выберите состояние сервера: ', 'reply_markup': keyboards.yes_or_no},
-    #   _____________________________________________   линия 2
-    'choose_server': {'text': 'Выберите сервер для удаления', 'reply_markup': None},
+    'choose_server_to_delete': {'text': 'Выберите сервер для удаления', 'reply_markup': None},
     'delete_this_one': {'text': 'Вы уверены, что хотите удалить сервер?', 'reply_markup': keyboards.delete_this_server},
-
+    'choose_server_to_off': {'text': 'Выберите сервер для выключения', 'reply_markup': None},
+    'off_this_one': {'text': 'Вы уверены, что хотите выкулючить сервер?', 'reply_markup': keyboards.off_this_server},
+    'choose_server_to_on': {'text': 'Выберите сервер для включения', 'reply_markup': None},
+    'on_this_one': {'text': 'Вы уверены, что хотите включить сервер?', 'reply_markup': keyboards.on_this_server},
 }
 
 
@@ -100,20 +103,28 @@ class User:
 
         elif data == 'Добавить сервер':  # Начало линия 1
             await self.set_order_state('input_server_name')
+            print('Index 0')
             return await self.state_prompt()
 
-        elif data == 'Вывести все сервера':  # Вывод серверов можно сказать линия 2
+        elif data == 'Вывести все сервера':
+            print('Index None')
             return await self.show_all_servers()
 
         elif data == 'Удалить сервер':
-            await self.set_order_state('choose_server')
+            await self.set_order_state('choose_server_to_delete')
+            print('Index 6')
             return await self.state_prompt(text=data, keyboard=keyboards.buttons_generator())
 
+        elif data == 'Выключить сервер':
+            await self.set_order_state('choose_server_to_off')
+            return await self.state_prompt(text=data, keyboard=keyboards.buttons_true_generator())
+
+        elif data == 'Включить сервер':
+            await self.set_order_state('choose_server_to_on')
+            return await self.state_prompt(text=data, keyboard=keyboards.buttons_false_generator())
+
         else:
-            try:
-                return await self.state_funcs[state](self, data)
-            except:
-                return {'text': 'Некорректная команда №1. Если возникли проблемы - свяжитесь с @Zeportus'}
+            return {'text': 'Некорректная команда №1. Если возникли проблемы - свяжитесь с @Zeportus'}
 
     #   Функция ставит имя серверу
     async def set_server_name(self, server_name):
@@ -194,7 +205,8 @@ class User:
         # Возвращаем сгенерированный текст
         return await self.state_prompt(text=text2, keyboard=keyboards.main)
 
-    async def choose_server(self, data):
+    #   Пользовает выбирает сервер, который хочет удалить
+    async def choose_server_to_delete(self, data):
         if data.lower() == 'decline':
             text2 = 'Главное меню'
             return await self.state_prompt(text=text2, keyboard=keyboards.main)
@@ -203,6 +215,7 @@ class User:
             text2 = f"Вы выбрали сервер '{self.server_name}' для удаления."
             return await self.next_order_state(text=text2, keyboard=keyboards.delete_this_server)
 
+    #   Подтверждение у пользователя, точно ли он хочет его удалить
     async def delete_this_one(self, data):
         if data.lower() == 'удалить':
             if self.server_name:  # Проверка, что имя сервера установлено
@@ -218,7 +231,62 @@ class User:
         await self.set_order_state('main')
         return {'text': text2, 'reply_markup': keyboards.main}
 
-    # Добавить в state_funcs
+    # Пользователь выбирает сервер чтоб выключить
+    async def choose_server_to_off(self, data):
+        if data.lower() == 'decline':
+            text2 = 'Главное меню'
+            return await self.state_prompt(text=text2, keyboard=keyboards.main)
+        else:
+            self.server_name = data  # Сохраняем имя сервера
+            text2 = f"Вы выбрали сервер '{self.server_name}' для выключения."
+            return await self.next_order_state(text=text2, keyboard=keyboards.off_this_server)
+
+    async def off_this_one(self, data):
+        print('Функция вызвалаось, что в data -', data)
+        if data.lower() == 'выключить':
+            print('Записалось имя сервера при выключении?')
+            if self.server_name:  # Проверка, что имя сервера установлено
+                print('Да, записалось!')
+                # выключение сервера в базе данных
+                self.server_manager.off_server(server_name=self.server_name)
+                text2 = f"Сервер '{self.server_name}' выключен."
+            else:
+                text2 = "Ошибка: Не выбран сервер для выключения."
+        else:
+            text2 = "Выключение отменено."
+
+        # Возврат в главное меню
+        await self.set_order_state('main')
+        return {'text': text2, 'reply_markup': keyboards.main}
+
+    # Пользователь выбирает сервер чтоб включить
+    async def choose_server_to_on(self, data):
+        if data.lower() == 'decline':
+            text2 = 'Главное меню'
+            return await self.state_prompt(text=text2, keyboard=keyboards.main)
+        else:
+            print('Сработает сохранение имени?')
+            self.server_name = data  # Сохраняем имя сервера
+            print('Сохранение имени сработало')
+            text2 = f"Вы выбрали сервер '{self.server_name}' для включения."
+            return await self.next_order_state(text=text2, keyboard=keyboards.on_this_server)
+
+    async def on_this_one(self, data):
+        if data.lower() == 'включить':
+            if self.server_name:  # Проверка, что имя сервера установлено
+                # включение сервера в базе данных
+                print('Сработает ли server_manager.on_server')
+                self.server_manager.on_server(server_name=self.server_name)
+                print('Сработал server_manager.on_server')
+                text2 = f"Сервер '{self.server_name}' включен."
+            else:
+                text2 = "Ошибка: Не выбран сервер для включения."
+        else:
+            text2 = "Включение отменено."
+
+        # Возврат в главное меню
+        await self.set_order_state('main')
+        return {'text': text2, 'reply_markup': keyboards.main}
 
 
 state_funcs = {
@@ -227,8 +295,10 @@ state_funcs = {
     'input_server_password': User.set_server_password,  # линия 1
     'input_server_status': User.set_server_status,  # линия 1
     'confirm_server': User.confirm_server,  # линия 1
-    #   _____________________________________________
-    'choose_server': User.choose_server,    # линия 2
+    'choose_server_to_delete': User.choose_server_to_delete,  # линия 2
     'delete_this_one': User.delete_this_one,  # линия 2
-
+    'choose_server_to_off': User.choose_server_to_off,  # линия 3
+    'off_this_one': User.off_this_one,  # линия 3
+    'choose_server_to_on': User.choose_server_to_on,  # линия 4
+    'on_this_one': User.on_this_one,  # линия 4
 }

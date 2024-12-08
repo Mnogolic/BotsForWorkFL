@@ -60,3 +60,53 @@ class ServersManager:
         print("Index: None, Сервер успешно удалён.\n")
         with open(self.path, "w", encoding="utf-8") as f:
             json.dump(server_list.dict(), f, indent=4, ensure_ascii=False)
+
+    #   Функция перевеодит сервер в .json в false status
+    def off_server(self, server_name):
+        server_list = self._get_servers_list()
+
+        server_found = False
+        for server_info in server_list.servers:
+            if server_info.name == server_name:
+                if server_info.status:
+                    server_info.status = False
+                    server_found = True
+                    break
+
+        if not server_found:
+            print(f"Сервер с именем {server_name} не найден или его статус уже не 'Включен'.")
+            return "Сервер не найден или его статус уже изменен."
+
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(server_list.dict(), f, indent=4, ensure_ascii=False)
+
+        print(f"Статус сервера '{server_name}' успешно изменён на 'Выкл'.")
+        return f"Статус сервера '{server_name}' успешно изменён на 'Выключен'."
+
+    #   Функция перевеодит сервер в .json в true status
+    def on_server(self, server_name):
+        server_list = self._get_servers_list()
+
+        server_found = False
+        for server_info in server_list.servers:
+            if server_info.name == server_name:
+                if not server_info.status:  # Если сервер выключен, включаем его
+                    server_info.status = True
+                    server_found = True
+                    break
+
+        if not server_found:
+            print(f"Сервер с именем {server_name} не найден или его статус уже 'Включен'.")
+            return "Сервер не найден или его статус уже изменен."
+
+        with open(self.path, "w", encoding="utf-8") as f:
+            json.dump(server_list.dict(), f, indent=4, ensure_ascii=False)
+
+        print(f"Статус сервера '{server_name}' успешно изменён на 'Вкл'.")
+        return f"Статус сервера '{server_name}' успешно изменён на 'Включен'."
+
+
+"""
+servers = ServersManager()
+servers.on_server("омроиорилор")
+"""
